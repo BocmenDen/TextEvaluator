@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="TextEvaluator.Cache/TextEvaluator.Cache.csproj" />
+  <Project Path="TextEvaluator.CollectionGrading/TextEvaluator.CollectionGrading.csproj" />
+  <Project Path="TextEvaluator.Core/TextEvaluator.Core.csproj" />
+  <Project Path="TextEvaluator.Ollama/TextEvaluator.Ollama.csproj" />
+</Solution>
