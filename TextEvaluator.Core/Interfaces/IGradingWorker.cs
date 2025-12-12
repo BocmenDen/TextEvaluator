@@ -1,9 +1,13 @@
 ﻿namespace TextEvaluator.Core.Interfaces
 {
-    public interface IGradingWorker<C, R> : IHasHash
+    public interface IGradingWorker<in C> : IGradingWorkerBase
         where C : IGradingCriterion
-        where R : IGradingResult
     {
         public IAsyncEnumerable<KeyValuePair<IGradingCriterion, IGradingResult>> GetResult(IEnumerable<C> gradingCriterions, string text, ILogging? logging = null);
+    }
+
+    public interface IGradingWorkerBase : IHasHash
+    {
+
     }
 }

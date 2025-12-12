@@ -1,11 +1,15 @@
-﻿using TextEvaluator.Core.Extensions;
+﻿using System.Text.Json.Serialization;
+using TextEvaluator.Core.Extensions;
 using TextEvaluator.Core.Interfaces;
 using TextEvaluator.Core.Models;
 
 namespace TextEvaluator.Ollama
 {
-    public class OllamaWorker(OllamaBase ollamaBase) : IGradingWorker<GradingCriterionPrompt, GradingResultDescription>
+    [method: JsonConstructor]
+    public class OllamaWorker(OllamaBase ollamaBase) : IGradingWorker<GradingCriterionPrompt>
     {
+        private const string MESSAGE_START_HANDLE = $"Обрабатываю критерий: {{{ILogging.CRIT_PARAM}}}";
+        private const string MESSAGE_RESULT = $"Результат обработки критерия: {{{ILogging.CRIT_RESULT_OBJ_PARAM}}}";
         private readonly OllamaBase _ollamaBase = ollamaBase;
         public string HashText { get; private set; } = $"{ollamaBase.Model}|{nameof(OllamaWorker)}".GetHashText();
 
@@ -13,19 +17,17 @@ namespace TextEvaluator.Ollama
 
         public async IAsyncEnumerable<KeyValuePair<IGradingCriterion, IGradingResult>> GetResult(IEnumerable<GradingCriterionPrompt> gradingCriterions, string text, ILogging? logging = null)
         {
-            using var log = logging?.CreateChildLogging(nameof(OllamaWorker), this);
+            using var log = logging?.CreateChildLogging(typeof(OllamaWorker), this);
             foreach (var crit in gradingCriterions)
             {
-                log.LogInfo("Обрабатываю критерий: {crit}", crit);
-                var messageContent = await _ollamaBase.GetFormatResponse(
+                log.LogInfo(MESSAGE_START_HANDLE, crit);
+                var result = await _ollamaBase.GetFormatResponse(
                         [
                             Message.CreateSystem(crit.ApplayPromptTemplate()),
-                            Message.CreateSystem("Пример формата ответа JSON: { \"score\": 0.2, \"description\": \"Такая оценка была поставленна из-за ...\"}"),
                             Message.CreateUser(text),
                         ], crit.MaxScore);
-                KeyValuePair<IGradingCriterion, IGradingResult> result = new(crit, messageContent);
-                log.LogInfo("Результат обработки критерия: {result}", result);
-                yield return result;
+                log.LogInfo(MESSAGE_RESULT, result);
+                yield return new(crit, result);
             }
             yield break;
         }

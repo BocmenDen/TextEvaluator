@@ -1,13 +1,17 @@
 ﻿using System.Text;
+using System.Text.Json.Serialization;
 using TextEvaluator.Core.Extensions;
 using TextEvaluator.Core.Interfaces;
 using TextEvaluator.Core.Models;
 
 namespace TextEvaluator.Ollama
 {
-    public class OllamaEvaluatorWorker : IGradingWorker<GradingCriterionPrompt, GradingResultDescription>
+    public class OllamaEvaluatorWorker : IGradingWorker<GradingCriterionPrompt>
     {
-        private readonly IGradingWorker<GradingCriterionPrompt, GradingResultDescription> _worker;
+        private const string MESSAGE_EXPERT_RESULT = $"Эксперт {{{ILogging.INDEX_PARAM}}}, бал {{{ILogging.CRIT_RESULT_SCORE_PARAM}}}, коментарий {{{ILogging.DESCRIPTION_PARAM}}}";
+        private const string MESSAGE_FINAL_RESULT = $"Заключение, бал {{{ILogging.CRIT_RESULT_SCORE_PARAM}}}, коментарий {{{ILogging.DESCRIPTION_PARAM}}}";
+
+        private readonly IGradingWorker<GradingCriterionPrompt> _worker;
         private readonly OllamaBase _ollamaBase;
         public string HashText { get; private set; }
         private readonly int _countRetry;
@@ -19,29 +23,30 @@ namespace TextEvaluator.Ollama
             _worker = new OllamaWorker(_ollamaBase);
             _rootPrompt = prompt;
             _countRetry = count;
-            HashText = GetHashText(_ollamaBase, count, prompt, _worker);
+            HashText = GetHashText(_ollamaBase, count, _worker, prompt);
         }
 
-        public OllamaEvaluatorWorker(OllamaBase ollamaBase, int count, RootPrompt prompt, IGradingWorker<GradingCriterionPrompt, GradingResultDescription> worker)
+        [JsonConstructor]
+        public OllamaEvaluatorWorker(OllamaBase ollamaBase, int count, IGradingWorker<GradingCriterionPrompt> original, RootPrompt prompt)
         {
-            _worker = worker;
+            _worker = original;
             _rootPrompt = prompt;
             _ollamaBase = ollamaBase;
             _countRetry = count;
-            HashText = GetHashText(ollamaBase, count, prompt, worker);
+            HashText = GetHashText(ollamaBase, count, original, prompt);
         }
 
-        public OllamaEvaluatorWorker(string url, string model, int count, RootPrompt prompt, IGradingWorker<GradingCriterionPrompt, GradingResultDescription> worker)
-            : this(new OllamaBase(url, model), count, prompt, worker) { }
+        public OllamaEvaluatorWorker(string url, string model, int count, IGradingWorker<GradingCriterionPrompt> original, RootPrompt prompt)
+            : this(new OllamaBase(url, model), count, original, prompt) { }
 
-        private static string GetHashText(OllamaBase ollamaBase, int count, RootPrompt prompt, IGradingWorker<GradingCriterionPrompt, GradingResultDescription> worker)
-            => $"{count}|{ollamaBase.Model}|{prompt.HashText}|{worker.HashText}".GetHashText();
+        private static string GetHashText(OllamaBase ollamaBase, int count, IGradingWorker<GradingCriterionPrompt> original, RootPrompt prompt)
+            => $"{count}|{ollamaBase.Model}|{prompt.HashText}|{original.HashText}".GetHashText();
 
         public async IAsyncEnumerable<KeyValuePair<IGradingCriterion, IGradingResult>> GetResult(IEnumerable<GradingCriterionPrompt> gradingCriterions, string text, ILogging? logging = null)
         {
-            using var log = logging?.CreateChildLogging(nameof(OllamaEvaluatorWorker), this);
+            using var log = logging?.CreateChildLogging(typeof(OllamaEvaluatorWorker), this);
             foreach (var crit in gradingCriterions)
-                yield return new(crit, await GetResultCrit(crit, text, logging));
+                yield return new(crit, await GetResultCrit(crit, text, log));
             yield break;
         }
 
@@ -64,17 +69,17 @@ namespace TextEvaluator.Ollama
                 sb.AppendLine($"Эксперт № {++i}");
                 sb.AppendLine($"Бал: {item.Score}");
                 sb.AppendLine($"Коментарий: {item.Description}");
-                logging.LogInfo("Эксперт {expert}, бал {score}, коментарий {description}", i, item.Score, item.Description);
+                logging.LogInfo(MESSAGE_EXPERT_RESULT, i, item.Score, item.Description);
             }
 
             var resultReturn = await _ollamaBase.GetFormatResponse(
                 [
                     Message.CreateSystem(_rootPrompt.ApplayPromptTemplate(crit)),
-                        Message.CreateSystem(sb.ToString()),
-                        Message.CreateUser(text),
-                    ], crit.MaxScore);
+                    Message.CreateSystem(sb.ToString()),
+                    Message.CreateUser(text),
+                ], crit.MaxScore);
 
-            logging.LogInfo("Заключение, бал {score}, коментарий {description}", resultReturn.Score, resultReturn.Description);
+            logging.LogInfo(MESSAGE_FINAL_RESULT, resultReturn.Score, resultReturn.Description);
 
             return resultReturn;
         }

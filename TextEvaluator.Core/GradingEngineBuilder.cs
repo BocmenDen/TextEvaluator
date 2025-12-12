@@ -3,19 +3,28 @@ using System.Numerics;
 using System.Reflection;
 using System.Text;
 using TextEvaluator.Core.Interfaces;
+using TextEvaluator.Core.Models;
 
 namespace TextEvaluator.Core
 {
     public class GradingEngineBuilder
     {
-        private readonly List<IGradingCriterion> _gradingCriteria = [];
-        private readonly List<object> gradingWorkers = [];
+        private readonly HashSet<IGradingCriterion> _gradingCriteria = new(new HasHashComparer<IGradingCriterion>());
+        private readonly HashSet<IHasHash> gradingWorkers = new(new HasHashComparer<IHasHash>());
 
         public void AddGradingCriterion<T>(T gradingCriterion) where T : IGradingCriterion => _gradingCriteria.Add(gradingCriterion);
-        public void AddGradingWorker(object gradingWorker) => gradingWorkers.Add(gradingWorker);
-
+        public void AddGradingWorker<T>(T gradingWorker)
+            where T : IGradingWorkerBase => gradingWorkers.Add(gradingWorker);
 
         public GradingEngine CreateEngine()
+        {
+            var apply = BuildFun();
+
+            var hash = ComputeHashBytes();
+            return new GradingEngine(hash, apply, [.. _gradingCriteria]);
+        }
+
+        public Func<string, ILogging?, IAsyncEnumerable<KeyValuePair<IGradingCriterion, IGradingResult>>> BuildFun()
         {
             Dictionary<Type, object> dictWorkers = GetWorkerByCritType();
             Dictionary<Type, List<object>> dictCriteria = ConnectCritToWorker(dictWorkers);
@@ -32,9 +41,7 @@ namespace TextEvaluator.Core
                     }
                 }
             }
-
-            var hash = ComputeHashBytes();
-            return new GradingEngine(hash, apply, _gradingCriteria);
+            return apply;
         }
 
         private static List<Func<string, ILogging?, IAsyncEnumerable<KeyValuePair<IGradingCriterion, IGradingResult>>>> GetFunctions(Dictionary<Type, object> dictWorkers, Dictionary<Type, List<object>> dictCriteria)
@@ -43,13 +50,14 @@ namespace TextEvaluator.Core
             foreach (var typeCrit in dictCriteria)
             {
                 var worker = dictWorkers[typeCrit.Key]!;
-                var method = worker.GetType().GetMethod(nameof(IGradingWorker<,>.GetResult), [typeof(IEnumerable<>).MakeGenericType(typeCrit.Key), typeof(string), typeof(ILogging)]) ?? throw new Exception("Не найден нужный метод у исполнителя");
+                var method = worker.GetType().GetMethod(nameof(IGradingWorker<>.GetResult), [typeof(IEnumerable<>).MakeGenericType(typeCrit.Key), typeof(string), typeof(ILogging)]) ?? throw new Exception("Не найден нужный метод у исполнителя");
 
                 var workerExpr = Expression.Constant(worker);
                 var criteriaExpr = Expression.Constant(CastToTypedEnumerable(typeCrit.Value, typeCrit.Key));
                 var textParam = Expression.Parameter(typeof(string), "text");
+                var loggingParam = Expression.Parameter(typeof(ILogging), "logging");
 
-                var callExpr = Expression.Call(workerExpr, method, criteriaExpr, textParam);
+                var callExpr = Expression.Call(workerExpr, method, criteriaExpr, textParam, loggingParam);
 
                 var typeResult = method.ReturnType.GetGenericArguments()[0];
                 var genericArgs = typeResult.GetGenericArguments();
@@ -62,7 +70,8 @@ namespace TextEvaluator.Core
 
                 var lambda = Expression.Lambda<Func<string, ILogging?, IAsyncEnumerable<KeyValuePair<IGradingCriterion, IGradingResult>>>>(
                     callConvertExpr,
-                    textParam
+                    textParam,
+                    loggingParam
                 );
 
                 var compiledResult = lambda.Compile();
@@ -105,7 +114,7 @@ namespace TextEvaluator.Core
 
                 foreach (var iface in interfaces)
                 {
-                    if (iface.IsGenericType && iface.GetGenericTypeDefinition() == typeof(IGradingWorker<,>))
+                    if (iface.IsGenericType && iface.GetGenericTypeDefinition() == typeof(IGradingWorker<>))
                     {
                         var criterionType = iface.GetGenericArguments()[0];
                         if (!dictWorkers.ContainsKey(criterionType))
@@ -126,7 +135,7 @@ namespace TextEvaluator.Core
             return result;
         }
 
-        private string ComputeHashBytes()
+        public string ComputeHashBytes()
         {
             BigInteger combined = BigInteger.Zero;
             foreach (var item in _gradingCriteria.Concat(gradingWorkers))

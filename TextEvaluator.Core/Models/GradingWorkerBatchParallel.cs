@@ -1,17 +1,18 @@
-﻿using TextEvaluator.Core.Interfaces;
+﻿using System.Text.Json.Serialization;
+using TextEvaluator.Core.Interfaces;
 
 namespace TextEvaluator.Core.Models
 {
-    public class GradingWorkerBatchParallel<C, R>(IGradingWorker<C, R> original, int batchSize) : IGradingWorker<C, R>
+    [method: JsonConstructor]
+    public class GradingWorkerBatchParallel<C>(IGradingWorker<C> original, int batchSize) : IGradingWorker<C>
         where C : IGradingCriterion
-        where R : IGradingResult
     {
         public string HashText => original.HashText;
 
         public async IAsyncEnumerable<KeyValuePair<IGradingCriterion, IGradingResult>> GetResult(IEnumerable<C> gradingCriterions, string text, ILogging? logging = null)
         {
             using var enumerator = gradingCriterions.GetEnumerator();
-            using var log = logging?.CreateChildLogging(nameof(GradingWorkerBatchParallel<,>), this);
+            using var log = logging?.CreateChildLogging(typeof(GradingWorkerBatchParallel<>), this);
             var batch = new List<C>(batchSize);
             while (true)
             {
@@ -32,7 +33,7 @@ namespace TextEvaluator.Core.Models
 
                 var results = await Task.WhenAll(tasks);
 
-                foreach(var item in results.SelectMany(x => x))
+                foreach (var item in results.SelectMany(x => x))
                     yield return item;
             }
         }

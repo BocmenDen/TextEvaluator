@@ -1,40 +1,50 @@
 ﻿using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using TextEvaluator.Core.Extensions;
 using TextEvaluator.Core.Interfaces;
 using TextEvaluator.Core.Models;
 
 namespace TextEvaluator.Ollama
 {
-    public class OllamaBase(string url, string model)
+    [method: JsonConstructor]
+    public class OllamaBase(string url, string model, int countRetry = 2)
     {
+        private const string MESSAGE_ERROR_SCORE = $"Полученная оценка {{{ILogging.CRIT_RESULT_SCORE_PARAM}_output}} больше заданной {{{ILogging.CRIT_RESULT_SCORE_PARAM}_input}}";
+        private const string MESSAGE_RETRY_GET_SCORE = $"Полученная оценка равна {{{ILogging.CRIT_RESULT_SCORE_PARAM}}}, повторю запрос для уточнения";
+        private const string MESSAGE_START_GET_SCORE = $"Выполняю попытку оценивания: {{{ILogging.INDEX_PARAM}}}";
+        private const string RESULT_UNKOWN_ERROR = "Не удалось оценить, неизвестная ошибка";
+        private const string MESSAGE_SEND = "Отправляю запрос на {url}/api/chat: {payload}";
+        private readonly IEnumerable<Message> RootMessageFormat = [Message.CreateSystem("Пример формата ответа JSON: { \"score\": 0.2, \"description\": \"Такая оценка была поставленна из-за ...\"}")];
+
         internal string Url { get; private set; } = url;
         internal string Model { get; private set; } = model;
+        private readonly int _countRetry = countRetry;
 
         private readonly HttpClient _client = new()
         {
             BaseAddress = new Uri(url)
         };
 
-        public async Task<GradingResultDescription> GetFormatResponse(IEnumerable<Message> messages, double maxScope, ILogging? logging = null)
+        public async Task<GradingResultDescription> GetFormatResponse(IEnumerable<Message> messages, double maxScore, ILogging? logging = null)
         {
             GradingResultDescription returnItem = new()
             {
                 Score = -1,
-                Error = "Не удалось оценить, неизвестная ошибка"
+                Error = RESULT_UNKOWN_ERROR
             };
             int countRetry = 0;
             int globalRetry = 0;
-            using var log = logging?.CreateChildLogging(nameof(OllamaBase), this);
+            using var log = logging?.CreateChildLogging(typeof(OllamaBase), this);
             try
             {
                 do
                 {
-                    log.LogInfo("Выполняю попытку оценивания: {count}", globalRetry++);
+                    log.LogInfo(MESSAGE_START_GET_SCORE, globalRetry++);
                     var payload = new
                     {
                         model = Model,
-                        messages = messages.Select(x => new
+                        messages = RootMessageFormat.Concat(messages).Select(x => new
                         {
                             role = x.Role,
                             content = x.Content
@@ -54,8 +64,9 @@ namespace TextEvaluator.Ollama
                             required = new[] { "score", "description" }
                         }
                     };
-                    var json = JsonSerializer.Serialize(payload);
+                    var json = System.Text.Json.JsonSerializer.Serialize(payload);
                     using var content = new StringContent(json, Encoding.UTF8, "application/json");
+                    log.LogInfo(MESSAGE_SEND, _client.BaseAddress, json);
                     using var response = await _client.PostAsync("/api/chat", content);
                     response.EnsureSuccessStatusCode();
                     var responseText = await response.Content.ReadAsStringAsync();
@@ -80,14 +91,14 @@ namespace TextEvaluator.Ollama
                         }
                     }
 
-                    if (returnItem.Score > maxScope)
+                    if (returnItem.Score > maxScore)
                     {
-                        log.LogWarning("Полученная оценка {scope_output} больше заданной {scope_input}", returnItem.Score, maxScope);
+                        log.LogWarning(MESSAGE_ERROR_SCORE, returnItem.Score, maxScore);
                         continue;
                     }
-                    if (countRetry++ < 2)
+                    if (countRetry++ < _countRetry)
                     {
-                        log.LogWarning("Полученная оценка равна 0, повторю запрос для уточнения");
+                        log.LogWarning(MESSAGE_RETRY_GET_SCORE, 0.0);
                         continue;
                     }
                     break;
@@ -100,7 +111,7 @@ namespace TextEvaluator.Ollama
                     Score = -1,
                     Error = e.Message
                 };
-                log.LogError("Произошла неизвестная ошибка: {error}", e);
+                log.LogException(e);
             }
 
             return returnItem;

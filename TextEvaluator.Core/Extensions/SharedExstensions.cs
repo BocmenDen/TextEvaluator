@@ -10,6 +10,7 @@ namespace TextEvaluator.Core.Extensions
         public static void LogInfo(this ILogging? logging, string message, params object?[] args) => logging?.Log(LogTypes.Info, message, args);
         public static void LogWarning(this ILogging? logging, string message, params object?[] args) => logging?.Log(LogTypes.Warning, message, args);
         public static void LogError(this ILogging? logging, string message, params object?[] args) => logging?.Log(LogTypes.Error, message, args);
+        public static void LogException(this ILogging? logging, Exception e) => logging.LogError($"Произошла неизвестная ошибка: {{{ILogging.ERROR_PARAM}}}", e);
         public static void LogFatal(this ILogging? logging, string message, params object?[] args) => logging?.Log(LogTypes.Fatal, message, args);
     }
 }

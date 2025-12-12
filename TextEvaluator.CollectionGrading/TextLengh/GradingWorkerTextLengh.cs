@@ -5,8 +5,10 @@ using TextEvaluator.Core.Interfaces;
 
 namespace TextEvaluator.CollectionGrading.TextLengh
 {
-    public partial class GradingWorkerTextLengh : IGradingWorker<GradingCriterionTextLength, GradingResult>
+    public partial class GradingWorkerTextLengh : IGradingWorker<GradingCriterionTextLength>
     {
+        private const string MESSAGE_RESULT = $"Результат оценки по критерию {{{ILogging.CRIT_PARAM}}}: {{{ILogging.CRIT_RESULT_SCORE_PARAM}}}";
+
         [GeneratedRegex(@"\b\w+\b")]
         private static partial Regex GetCountWord();
 
@@ -14,7 +16,7 @@ namespace TextEvaluator.CollectionGrading.TextLengh
 
         public async IAsyncEnumerable<KeyValuePair<IGradingCriterion, IGradingResult>> GetResult(IEnumerable<GradingCriterionTextLength> gradingCriterions, string text, ILogging? logging = null)
         {
-            using var log = logging?.CreateChildLogging(nameof(GradingWorkerTextLengh), this);
+            using var log = logging?.CreateChildLogging(typeof(GradingWorkerTextLengh), this);
             int wordCount = GetCountWord().Count(text);
             foreach (var crit in gradingCriterions)
             {
@@ -33,7 +35,7 @@ namespace TextEvaluator.CollectionGrading.TextLengh
                     res = (double)wordCount / (crit.MaxLength - crit.MinLength);
                     res *= crit.MaxScore;
                 }
-                log.LogInfo("Результат оценки по критерию {crit}: {score}", crit, res);
+                log.LogInfo(MESSAGE_RESULT, crit, res);
                 yield return new(crit, new GradingResult()
                 {
                     Score = res

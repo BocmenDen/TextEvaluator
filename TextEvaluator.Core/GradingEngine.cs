@@ -17,7 +17,7 @@ namespace TextEvaluator.Core
 
         public IAsyncEnumerable<KeyValuePair<IGradingCriterion, IGradingResult>> ApplyAsync(string text, ILogging? logging = null)
         {
-            using var log = logging?.CreateChildLogging(nameof(GradingEngine), this);
+            using var log = logging?.CreateChildLogging(typeof(GradingEngine), this);
             return _apply(text, log);
         }
     }

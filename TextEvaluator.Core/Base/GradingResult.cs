@@ -10,5 +10,7 @@ namespace TextEvaluator.Core.Base
         public bool IsNotError => string.IsNullOrEmpty(Error);
 
         public override string ToString() => IsNotError ? Score.ToString() : Error!;
+
+        public static GradingResult CreateError(string error) => new() { Score = -1, Error = error };
     }
 }

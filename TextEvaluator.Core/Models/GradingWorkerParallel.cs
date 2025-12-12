@@ -1,14 +1,15 @@
-﻿using TextEvaluator.Core.Interfaces;
+﻿using System.Text.Json.Serialization;
+using TextEvaluator.Core.Interfaces;
 
 namespace TextEvaluator.Core.Models
 {
-    public class GradingWorkerParallel<C, R> : IGradingWorker<C, R>
+    public class GradingWorkerParallel<C> : IGradingWorker<C>
         where C : IGradingCriterion
-        where R : IGradingResult
     {
         public string HashText { get; private set; }
-        private readonly IReadOnlyList<IGradingWorker<C, R>> _original;
-        public GradingWorkerParallel(IEnumerable<IGradingWorker<C, R>> original, int batchSize)
+        private readonly IReadOnlyList<IGradingWorker<C>> _original;
+        [method: JsonConstructor]
+        public GradingWorkerParallel(IEnumerable<IGradingWorker<C>> original)
         {
             if (!original.Any())
                 throw new ArgumentException("Коллекция воркеров пуста");
@@ -25,7 +26,7 @@ namespace TextEvaluator.Core.Models
         public async IAsyncEnumerable<KeyValuePair<IGradingCriterion, IGradingResult>> GetResult(IEnumerable<C> gradingCriterions, string text, ILogging? logging = null)
         {
             using var enumerator = gradingCriterions.GetEnumerator();
-            using var log = logging?.CreateChildLogging(nameof(GradingWorkerParallel<,>), this);
+            using var log = logging?.CreateChildLogging(typeof(GradingWorkerParallel<>), this);
             var batch = new List<C>(_original.Count);
             while (true)
             {
