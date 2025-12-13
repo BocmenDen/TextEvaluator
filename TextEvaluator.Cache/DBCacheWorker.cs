@@ -67,8 +67,8 @@ namespace TextEvaluator.Cache
                     DataTable.Add(entity);
                     await SaveChangesAsync();
                     log.LogInfo(MESSAGE_ADD_CACHE, item.Value, item.Key);
-                    yield return item;
                 }
+                yield return item;
             }
 
             yield break;
