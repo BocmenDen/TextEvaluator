@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using TextEvaluator.Core.Base;
 using TextEvaluator.Core.Extensions;
 using TextEvaluator.Core.Interfaces;
 using TextEvaluator.Core.Models;
@@ -106,11 +107,7 @@ namespace TextEvaluator.Ollama
             }
             catch (Exception e)
             {
-                returnItem = new GradingResultDescription()
-                {
-                    Score = -1,
-                    Error = e.Message
-                };
+                returnItem = GradingResult.CreateError<GradingResultDescription>(e.Message);
                 log.LogException(e);
             }
 
