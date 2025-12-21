@@ -2,7 +2,7 @@
 
 namespace TextEvaluator.Core.Models
 {
-    public class GradingResultDescription : GradingResult
+    public class GradingResultAI : GradingResult
     {
         public string? Description { get; init; }
     }

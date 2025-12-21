@@ -29,7 +29,7 @@ namespace TextEvaluator.Cache
             using var log = logging?.CreateChildLogging(typeof(DBCacheWorker<>), this);
             foreach (var crit in gradingCriterions)
             {
-                var search = await DataTable.AsNoTracking().FirstOrDefaultAsync(x => x.IDCriteria == crit.HashText && x.Key == key);
+                var search = await DataTable.AsNoTracking().FirstOrDefaultAsync(x => x.IDCriteria == crit.HashText && x.Key == key && x.IDModel == _worker.HashText);
                 if (search == null)
                 {
                     critNoCache.Add(crit);
@@ -61,6 +61,7 @@ namespace TextEvaluator.Cache
                     {
                         Key = key,
                         IDCriteria = item.Key.HashText,
+                        IDModel = _worker.HashText,
                         JsonData = JsonSerializer.Serialize(item.Value, type),
                         FullNameTypename = typeName
                     };

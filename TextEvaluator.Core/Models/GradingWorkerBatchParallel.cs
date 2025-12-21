@@ -3,9 +3,10 @@ using TextEvaluator.Core.Interfaces;
 
 namespace TextEvaluator.Core.Models
 {
+
     [method: JsonConstructor]
     public class GradingWorkerBatchParallel<C>(IGradingWorker<C> original, int batchSize) : IGradingWorker<C>
-        where C : IGradingCriterion
+    where C : IGradingCriterion
     {
         public string HashText => original.HashText;
 
@@ -13,27 +14,31 @@ namespace TextEvaluator.Core.Models
         {
             using var enumerator = gradingCriterions.GetEnumerator();
             using var log = logging?.CreateChildLogging(typeof(GradingWorkerBatchParallel<>), this);
-            var batch = new List<C>(batchSize);
-            while (true)
+            List<Task<List<KeyValuePair<IGradingCriterion, IGradingResult>>>> tasks = [];
+            bool isNotStop = true;
+            while (isNotStop)
             {
-                batch.Clear();
-                for (int i = 0; i < batchSize && enumerator.MoveNext(); i++)
-                    batch.Add(enumerator.Current);
+                var batch = new List<C>(batchSize);
+                for (int i = 0; i < batchSize; i++)
+                {
+                    if(enumerator.MoveNext())
+                        batch.Add(enumerator.Current);
+                    else
+                    {
+                        isNotStop = false;
+                        break;
+                    }
+                }
 
                 if (batch.Count == 0)
-                    yield break;
+                    break;
 
-                var tasks = batch
-                    .Select(async crit =>
-                    {
-                        var resultReturn = await original.GetResult([crit], text, log).ToListAsync();
-                        return resultReturn;
-                    })
-                    .ToList();
-
-                var results = await Task.WhenAll(tasks);
-
-                foreach (var item in results.SelectMany(x => x))
+                tasks.AddRange(original.GetResult(batch, text, log).ToListAsync().AsTask());
+            }
+            foreach (var task in tasks)
+            {
+                var resItems = await task;
+                foreach(var item in resItems)
                     yield return item;
             }
         }

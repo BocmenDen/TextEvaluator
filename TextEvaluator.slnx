@@ -1,6 +1,8 @@
 <Solution>
+  <Project Path="TextEvaluator.AI.Base/TextEvaluator.AI.Base.csproj" />
+  <Project Path="TextEvaluator.AI.Bothub/TextEvaluator.AI.Bothub.csproj" Id="4d169859-430e-4f5a-b809-63cf0207ed33" />
+  <Project Path="TextEvaluator.AI.Ollama/TextEvaluator.AI.Ollama.csproj" />
   <Project Path="TextEvaluator.Cache/TextEvaluator.Cache.csproj" />
   <Project Path="TextEvaluator.CollectionGrading/TextEvaluator.CollectionGrading.csproj" />
   <Project Path="TextEvaluator.Core/TextEvaluator.Core.csproj" />
-  <Project Path="TextEvaluator.Ollama/TextEvaluator.Ollama.csproj" />
 </Solution>

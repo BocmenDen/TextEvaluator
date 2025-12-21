@@ -8,9 +8,11 @@ namespace TextEvaluator.Core.Models
     {
         public string HashText { get; private set; }
         private readonly IReadOnlyList<IGradingWorker<C>> _original;
+        private readonly int _batchSize;
         [method: JsonConstructor]
-        public GradingWorkerParallel(IEnumerable<IGradingWorker<C>> original)
+        public GradingWorkerParallel(IEnumerable<IGradingWorker<C>> original, int batchSize)
         {
+            _batchSize = batchSize;
             if (!original.Any())
                 throw new ArgumentException("Коллекция воркеров пуста");
 
@@ -27,28 +29,31 @@ namespace TextEvaluator.Core.Models
         {
             using var enumerator = gradingCriterions.GetEnumerator();
             using var log = logging?.CreateChildLogging(typeof(GradingWorkerParallel<>), this);
-            var batch = new List<C>(_original.Count);
+            int indexWorker = 0;
+            List<Task<List<KeyValuePair<IGradingCriterion, IGradingResult>>>> tasks = [];
             while (true)
             {
-                batch.Clear();
-                for (int i = 0; i < _original.Count && enumerator.MoveNext(); i++)
+                var batch = new List<C>(_original.Count);
+                for (int i = 0; i < _batchSize && enumerator.MoveNext(); i++)
                     batch.Add(enumerator.Current);
 
                 if (batch.Count == 0)
                     yield break;
 
-                var tasks = batch
-                    .Select(async (crit, i) =>
+                if (tasks.Count(x => !x.IsCompleted) > _batchSize)
+                {
+                    foreach (var taskC in tasks)
                     {
-                        var resultReturn = await _original[i].GetResult([crit], text, log).ToListAsync();
-                        return resultReturn;
-                    })
-                    .ToList();
+                        var taskRes = await taskC;
+                        foreach(var resItem in taskRes)
+                        {
+                            yield return resItem;
+                        }
+                    }
+                }
 
-                var results = await Task.WhenAll(tasks);
-
-                foreach (var item in results.SelectMany(x => x))
-                    yield return item;
+                tasks.Add(_original[indexWorker].GetResult(batch, text, log).ToListAsync().AsTask());
+                indexWorker = (indexWorker + 1) % _batchSize;
             }
         }
     }
