@@ -5,7 +5,7 @@ using TextEvaluator.Core.Models;
 
 namespace TextEvaluator.AI.Base
 {
-    public abstract class AIRequestBase(int countRetry): IHasHash
+    public abstract class AIRequestBase(int countRetry) : IHasHash
     {
         private const string MESSAGE_ERROR_SCORE = $"Полученная оценка {{{ILogging.CRIT_RESULT_SCORE_PARAM}_output}} больше заданной {{{ILogging.CRIT_RESULT_SCORE_PARAM}_input}}";
         private const string MESSAGE_RETRY_GET_SCORE = $"Полученная оценка равна {{{ILogging.CRIT_RESULT_SCORE_PARAM}}}, повторю запрос для уточнения";

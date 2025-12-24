@@ -45,7 +45,7 @@ namespace TextEvaluator.Core.Models
                     foreach (var taskC in tasks)
                     {
                         var taskRes = await taskC;
-                        foreach(var resItem in taskRes)
+                        foreach (var resItem in taskRes)
                         {
                             yield return resItem;
                         }

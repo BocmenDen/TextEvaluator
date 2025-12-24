@@ -23,7 +23,7 @@ namespace TextEvaluator.AI.Bothub
         private readonly HttpClient _client;
 
         [JsonConstructor]
-        public AIRequestBothub(string apiKey, string model, int countRetry = 3): base(countRetry)
+        public AIRequestBothub(string apiKey, string model, int countRetry = 3) : base(countRetry)
         {
             _model = model;
             _hashText = model.GetHashText();
@@ -62,7 +62,8 @@ namespace TextEvaluator.AI.Bothub
                                     type = "number",
                                     description = $"Итоговый бал от 0.0 до {maxScore}"
                                 },
-                                description = new {
+                                description = new
+                                {
                                     type = "string",
                                     description = $"Поле для комментария, почему поставлен именно такой бал",
                                     content_language = "ru"

@@ -11,6 +11,6 @@ namespace TextEvaluator.Core.Base
 
         public override string ToString() => IsNotError ? Score.ToString() : Error!;
 
-        public static T CreateError<T>(string error) where T: GradingResult, new() => new() { Score = -1, Error = error };
+        public static T CreateError<T>(string error) where T : IGradingResult, new() => new() { Score = -1, Error = error };
     }
 }

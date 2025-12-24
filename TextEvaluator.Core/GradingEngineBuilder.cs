@@ -96,7 +96,7 @@ namespace TextEvaluator.Core
             {
                 var type = criterion.GetType();
 
-                var searchWorker = dictWorkers.FirstOrDefault(x => x.Key.IsAssignableFrom(type)).Key??throw new Exception($"Не найден исполнитель оценки для следующего типа критерия {type.Name}");
+                var searchWorker = dictWorkers.FirstOrDefault(x => x.Key.IsAssignableFrom(type)).Key ?? throw new Exception($"Не найден исполнитель оценки для следующего типа критерия {type.Name}");
 
                 if (!dictCriteria.ContainsKey(type))
                     dictCriteria[searchWorker] = [];
