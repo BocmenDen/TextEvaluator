@@ -141,6 +141,8 @@ _TeamCity*
 *.dotCover
 
 # AxoCover is a Code Coverage Tool
+/__pycache__
+
 .axoCover/*
 !.axoCover/settings.json
 
