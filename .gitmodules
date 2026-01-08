@@ -1,0 +1,3 @@
+[submodule "TextEvaluator.AI.AIDetector/Python/DetectGPT"]
+	path = TextEvaluator.AI.AIDetector/Python/DetectGPT
+	url = https://github.com/BurhanUlTayyab/DetectGPT.git

@@ -1,4 +1,5 @@
-﻿using TextEvaluator.Core.Interfaces;
+﻿using TextEvaluator.Core.Extensions;
+using TextEvaluator.Core.Interfaces;
 
 namespace TextEvaluator.Core.Base
 {
@@ -23,7 +24,7 @@ namespace TextEvaluator.Core.Base
             _getValues.Add($"{nameof(GradingCriterion)}.{nameof(Criterion)}", () => Criterion ?? string.Empty);
         }
 
-        protected abstract string ComputeHashText();
+        protected virtual string ComputeHashText() => $"{typeof(GradingCriterion)}{MaxScore}{Criterion}".GetHashText();
         public override string ToString() => $"MaxScore[{MaxScore}] -> {Criterion}";
     }
 }

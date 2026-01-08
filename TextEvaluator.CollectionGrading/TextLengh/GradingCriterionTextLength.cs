@@ -10,10 +10,10 @@ namespace TextEvaluator.CollectionGrading.TextLengh
 
         public GradingCriterionTextLength()
         {
-            _getValues.Add($"{nameof(GradingCriterionTextLength)}.{nameof(MinLength)}", () => MinLength.ToString());
-            _getValues.Add($"{nameof(GradingCriterionTextLength)}.{nameof(MaxLength)}", () => MaxLength.ToString());
+            _getValues.Add($"{nameof(GradingCriterionTextLength)}.{nameof(MinLength)}", MinLength.ToString);
+            _getValues.Add($"{nameof(GradingCriterionTextLength)}.{nameof(MaxLength)}", MaxLength.ToString);
         }
 
-        protected override string ComputeHashText() => $"{nameof(GradingCriterionTextLength)}{MaxScore:0.##########}{MinLength}{MaxLength}".GetHashText();
+        protected override string ComputeHashText() => $"{nameof(GradingCriterionTextLength)}{MaxScore}{MinLength}{MaxLength}".GetHashText();
     }
 }
