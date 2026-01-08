@@ -21,7 +21,7 @@ namespace TextEvaluator.Core.Models
                 var batch = new List<C>(batchSize);
                 for (int i = 0; i < batchSize; i++)
                 {
-                    if(enumerator.MoveNext())
+                    if (enumerator.MoveNext())
                         batch.Add(enumerator.Current);
                     else
                     {
@@ -38,7 +38,7 @@ namespace TextEvaluator.Core.Models
             foreach (var task in tasks)
             {
                 var resItems = await task;
-                foreach(var item in resItems)
+                foreach (var item in resItems)
                     yield return item;
             }
         }
