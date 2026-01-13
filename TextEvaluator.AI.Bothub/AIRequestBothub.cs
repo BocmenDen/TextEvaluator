@@ -22,13 +22,13 @@ namespace TextEvaluator.AI.Bothub
         private readonly HttpClient _client;
 
         [JsonConstructor]
-        public AIRequestBothub(string apiKey, string model, int countRetry = 3) : base(countRetry)
+        public AIRequestBothub(string apiKey, string model, int countRetry = 3, int timeoutMinutes = 8) : base(countRetry)
         {
             _model = model;
             _hashText = model.GetHashText();
             _client = new()
             {
-                Timeout = TimeSpan.FromMinutes(3)
+                Timeout = TimeSpan.FromMinutes(timeoutMinutes)
             };
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
         }

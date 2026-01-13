@@ -9,7 +9,7 @@ using TextEvaluator.Core.Interfaces;
 namespace TextEvaluator.AI.Ollama
 {
     [method: JsonConstructor]
-    public class AIRequestOllama(string url, string model, int countRetry = 3) : AIRequestBase(countRetry)
+    public class AIRequestOllama(string url, string model, int countRetry = 3, int timeoutMinutes = 8) : AIRequestBase(countRetry)
     {
         private const string RESULT_UNKOWN_ERROR = "Не удалось оценить, неизвестная ошибка";
 
@@ -19,7 +19,7 @@ namespace TextEvaluator.AI.Ollama
         private readonly HttpClient _client = new()
         {
             BaseAddress = new Uri(url),
-            Timeout = TimeSpan.FromMinutes(5),
+            Timeout = TimeSpan.FromMinutes(timeoutMinutes),
         };
 
         protected override async Task<GradingResultAI> GetFormatResponse(IEnumerable<Message> messages, double maxScore, ILogging? logging = null)
