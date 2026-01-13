@@ -1,6 +1,6 @@
 ﻿using TextEvaluator.Core.Base;
 
-namespace TextEvaluator.Core.Models
+namespace TextEvaluator.AI.Base
 {
     public class GradingResultAI : GradingResult
     {

@@ -5,7 +5,6 @@ using TextEvaluator.AI.Base;
 using TextEvaluator.Core.Base;
 using TextEvaluator.Core.Extensions;
 using TextEvaluator.Core.Interfaces;
-using TextEvaluator.Core.Models;
 
 namespace TextEvaluator.AI.Ollama
 {

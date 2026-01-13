@@ -1,6 +1,4 @@
-﻿using TextEvaluator.Core.Models;
-
-namespace TextEvaluator.AI.Base
+﻿namespace TextEvaluator.AI.Base
 {
     public class AIEvaluatorResult : GradingResultAI
     {
