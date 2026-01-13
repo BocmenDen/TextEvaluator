@@ -3,7 +3,7 @@ using TextEvaluator.Core.Base;
 using TextEvaluator.Core.Extensions;
 using TextEvaluator.Core.Interfaces;
 
-namespace TextEvaluator.Core.Models
+namespace TextEvaluator.AI.Base
 {
     public partial class RootPrompt : IHasHash
     {

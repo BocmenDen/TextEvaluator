@@ -17,8 +17,15 @@ namespace TextEvaluator.AI.AIDetector
         {
             using var log = logging?.CreateChildLogging(typeof(GradingWorkerAIDetect), this); // TODO Logging
             var response = await _httpClient.PostAsJsonAsync("/detect", new { text });
-            response.EnsureSuccessStatusCode();
-            var aiResultBase = await response.Content.ReadFromJsonAsync<AIDetectResult>() ?? throw new Exception("Не удалось десериализовать ответ от сервера");
+            AIDetectResult aiResultBase;
+            if(response.IsSuccessStatusCode)
+                aiResultBase = await response.Content.ReadFromJsonAsync<AIDetectResult>() ?? throw new Exception("Не удалось десериализовать ответ от сервера");
+            else
+                aiResultBase = new AIDetectResult()
+                {
+                    Score = 0,
+                    Error = $"Ошибка при обращении к серверу: {response.StatusCode} - {response.ReasonPhrase}"
+                };
             foreach (var crit in gradingCriterions)
             {
                 yield return new(crit, new AIDetectResult()

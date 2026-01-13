@@ -1,6 +1,5 @@
 ﻿using TextEvaluator.Core.Base;
 using TextEvaluator.Core.Extensions;
-using TextEvaluator.Core.Models;
 
 namespace TextEvaluator.AI.Base
 {
