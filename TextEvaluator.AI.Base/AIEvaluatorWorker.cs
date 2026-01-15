@@ -18,7 +18,7 @@ namespace TextEvaluator.AI.Base
         private readonly int _countRetry = count;
         private readonly RootPrompt _rootPrompt = prompt;
 
-        public async IAsyncEnumerable<KeyValuePair<IGradingCriterion, IGradingResult>> GetResult(IEnumerable<GradingCriterionAI> gradingCriterions, string text, ILogging? logging = null)
+        public virtual async IAsyncEnumerable<KeyValuePair<IGradingCriterion, IGradingResult>> GetResult(IEnumerable<GradingCriterionAI> gradingCriterions, string text, ILogging? logging = null)
         {
             using var log = logging?.CreateChildLogging(typeof(AIEvaluatorWorker), this);
             foreach (var crit in gradingCriterions)
@@ -26,7 +26,7 @@ namespace TextEvaluator.AI.Base
             yield break;
         }
 
-        private async Task<GradingResultAI> GetResultCrit(GradingCriterionAI crit, string text, ILogging? logging = null)
+        protected async Task<GradingResultAI> GetResultCrit(GradingCriterionAI crit, string text, ILogging? logging = null)
         {
             var result = await _worker.GetResult(Enumerable.Range(0, _countRetry).Select(x => crit), text, logging).ToListAsync();
 
