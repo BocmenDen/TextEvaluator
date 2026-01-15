@@ -16,7 +16,7 @@ namespace TextEvaluator.AI.Base
                     var result = await GetResultCrit(crit, text, log);
                     if (!result.IsNotError) { yield return new(crit, result); break; }
                     gradingResultAI = (AIEvaluatorResult)result;
-                } while (Math.Abs(gradingResultAI.Score - gradingResultAI.RetryResults.Select(x => x.Score).Sum()) > maxOffset);
+                } while (Math.Abs(gradingResultAI.Score - (gradingResultAI.RetryResults.Select(x => x.Score).Sum() / count)) > maxOffset);
                 yield return new(crit, gradingResultAI);
             }
             yield break;
