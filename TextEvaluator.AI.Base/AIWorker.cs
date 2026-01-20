@@ -21,7 +21,7 @@ namespace TextEvaluator.AI.Base
                 var result = await _aiRequestBase.GetResult(
                         [
                             new Message(){ Content = crit.ApplayPromptTemplate(), Role = RoleType.System },
-                            new Message(){ Content = text, Role = RoleType.User },
+                            new Message(){ Content = $"ТЕКСТ ДЛЯ ОЦЕНИВАНИЯ:\n{text}", Role = RoleType.User },
                         ], crit.MaxScore);
                 log.LogInfo(MESSAGE_RESULT, result);
                 yield return new(crit, result);
