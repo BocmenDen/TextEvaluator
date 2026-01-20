@@ -1,4 +1,5 @@
-﻿using TextEvaluator.Core.Interfaces;
+﻿using TextEvaluator.Core.Base;
+using TextEvaluator.Core.Interfaces;
 
 namespace TextEvaluator.AI.Base
 {
@@ -11,12 +12,18 @@ namespace TextEvaluator.AI.Base
             {
                 double maxOffset = crit.MaxScore * maxAverageDeviationPercent;
                 AIEvaluatorResult gradingResultAI = null!;
+                int i = 0;
                 do
                 {
                     var result = await GetResultCrit(crit, text, log);
                     if (!result.IsNotError) { yield return new(crit, result); break; }
                     gradingResultAI = (AIEvaluatorResult)result;
+<<<<<<< Updated upstream
                 } while (Math.Abs(gradingResultAI.Score - (gradingResultAI.RetryResults.Select(x => x.Score).Sum() / count)) > maxOffset);
+=======
+                } while (Math.Abs(gradingResultAI.Score - (gradingResultAI.RetryResults.Select(x => x.Score).Sum() / count)) > maxOffset && i++ < 4);
+                if (i >= 4) { yield return new (crit, GradingResult.CreateError<AIEvaluatorResult>("Невалидый ответ эксперта! Требует ВНИМАНИЯ")); continue; } // TODO DEBUD
+>>>>>>> Stashed changes
                 yield return new(crit, gradingResultAI);
             }
             yield break;

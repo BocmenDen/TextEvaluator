@@ -30,8 +30,10 @@ namespace TextEvaluator.AI.Base
         {
             var result = await _worker.GetResult(Enumerable.Range(0, _countRetry).Select(x => crit), text, logging).ToListAsync();
 
-            if (result.Any(x => !x.Value.IsNotError))
-                return (GradingResultAI)result.First().Value;
+            var findError = result.FirstOrDefault(x => !x.Value.IsNotError).Value;
+
+            if (findError != null)
+                return (GradingResultAI)findError;
 
             StringBuilder sb = new();
 
