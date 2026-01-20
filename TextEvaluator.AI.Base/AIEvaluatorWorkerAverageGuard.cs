@@ -18,12 +18,8 @@ namespace TextEvaluator.AI.Base
                     var result = await GetResultCrit(crit, text, log);
                     if (!result.IsNotError) { yield return new(crit, result); break; }
                     gradingResultAI = (AIEvaluatorResult)result;
-<<<<<<< Updated upstream
-                } while (Math.Abs(gradingResultAI.Score - (gradingResultAI.RetryResults.Select(x => x.Score).Sum() / count)) > maxOffset);
-=======
                 } while (Math.Abs(gradingResultAI.Score - (gradingResultAI.RetryResults.Select(x => x.Score).Sum() / count)) > maxOffset && i++ < 4);
-                if (i >= 4) { yield return new (crit, GradingResult.CreateError<AIEvaluatorResult>("Невалидый ответ эксперта! Требует ВНИМАНИЯ")); continue; } // TODO DEBUD
->>>>>>> Stashed changes
+                if (i >= 4) { yield return new (crit, GradingResult.CreateError<AIEvaluatorResult>("Невалидый ответ эксперта! Требует ВНИМАНИЯ")); continue; }
                 yield return new(crit, gradingResultAI);
             }
             yield break;
